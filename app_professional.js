@@ -10,9 +10,9 @@ const AI_CONFIG = {
     enabled: true,
     provider: 'groq',
     groq: {
-        apiKey: 'YOUR_GROQ_API_KEY_HERE', // Get free at: https://console.groq.com
+        apiKey: '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', // ✅ API Key Added!
         endpoint: 'https://api.groq.com/openai/v1/chat/completions',
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.3-70b-versatile', // ✅ Updated to current model (Nov 2025)
         temperature: 0.2,
         maxTokens: 1500
     },
@@ -414,68 +414,70 @@ class AIIPCService {
     }
 
     async searchWithAI(keyword) {
-        const response = await fetch(AI_CONFIG.groq.endpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${AI_CONFIG.groq.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: AI_CONFIG.groq.model,
-                messages: [
-                    {
-                        role: 'system',
-                        content: `You are an expert on Indian Penal Code (IPC) and criminal law in India. Analyze the incident description and return EXACTLY 3 most relevant IPC sections as a JSON array.
+        console.log('🚀 Starting AI API call...');
+        console.log('📡 Endpoint:', AI_CONFIG.groq.endpoint);
+        console.log('🔑 API Key (first 10 chars):', AI_CONFIG.groq.apiKey.substring(0, 10) + '...');
+        console.log('🤖 Model:', AI_CONFIG.groq.model);
+        
+        try {
+            const response = await fetch(AI_CONFIG.groq.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${AI_CONFIG.groq.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: AI_CONFIG.groq.model,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are an expert on Indian Penal Code (IPC) and criminal law in India. Analyze the incident description and return EXACTLY 3 most relevant IPC sections as a JSON array.
 
 IMPORTANT: Return ONLY the JSON array, nothing else. No explanations, no markdown, just the JSON.
 
 Format EXACTLY like this:
 [{"section": "302", "title": "Murder", "description": "Punishment for murder", "punishment": "Death or life imprisonment", "keywords": ["kill", "murder", "death"]}]
 
-Cover ALL major crime categories:
-- Murder/Homicide (302, 304, 307, 309)
-- Assault/Hurt (323, 324, 325, 326, 355)
-- Sexual Offences (354, 376, 509, 354A, 354B, 354C, 354D)
-- Theft/Robbery (378, 379, 380, 381, 382, 392, 393, 394, 395, 396, 397)
-- Cheating/Fraud (415, 416, 417, 418, 419, 420, 421)
-- Extortion/Kidnapping (383, 384, 385, 363, 364, 365, 366, 367, 368)
-- Property Damage (425, 426, 427, 428, 429, 430, 435, 436, 438)
-- Criminal Intimidation/Threat (503, 504, 505, 506, 507, 508)
-- Defamation (499, 500, 501, 502)
-- Trespass (441, 442, 443, 447, 448)
-- Forgery (463, 464, 465, 466, 467, 468, 469, 470, 471, 473, 474, 475)
-- Public Nuisance (268, 269, 270, 271, 272, 273, 278, 279, 283, 285, 286)
-- Obscenity (292, 293, 294)
-- Corruption (161, 162, 163, 164, 165, 166, 167, 168, 169)
-- Dowry (304B, 498A)
-- Sedition/State Offences (121, 121A, 124A, 153A, 153B)
-- Riots (141, 143, 144, 145, 146, 147, 148, 149)
+Return ONLY the top 3 most relevant IPC sections based on incident description.`
+                        },
+                        {
+                            role: 'user',
+                            content: `Analyze this incident and return EXACTLY 3 most relevant IPC sections as JSON array: "${keyword}"`
+                        }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 1000
+                })
+            });
 
-Return ONLY the top 3 most relevant sections based on incident description.`
-                    },
-                    {
-                        role: 'user',
-                        content: `Analyze this incident and return EXACTLY 3 most relevant IPC sections as JSON array: "${keyword}"`
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 1000
-            })
-        });
+            console.log('📩 Response status:', response.status);
+            console.log('📩 Response ok:', response.ok);
 
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API Error Response:', errorText);
+                throw new Error(`API error: ${response.status} - ${errorText}`);
+            }
 
-        const data = await response.json();
-        const content = data.choices[0].message.content.trim();
-        const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const sections = JSON.parse(jsonContent);
+            const data = await response.json();
+            console.log('📦 Raw API response:', data);
+            
+            const content = data.choices[0].message.content.trim();
+            console.log('📝 AI Content:', content);
+            
+            const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const sections = JSON.parse(jsonContent);
 
-        return {
-            success: true,
-            sections: sections || [],
-            source: 'ai',
-            model: AI_CONFIG.groq.model
-        };
+            return {
+                success: true,
+                sections: sections || [],
+                source: 'ai',
+                model: AI_CONFIG.groq.model
+            };
+        } catch (error) {
+            console.error('❌ searchWithAI error:', error);
+            throw error;
+        }
     }
 
     async searchStatic(keyword) {
