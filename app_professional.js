@@ -92,20 +92,93 @@ let firIdCounter = firStorage.length + 1;
 
 // Static IPC data
 const STATIC_IPC_SECTIONS = [
-    {"section": "302", "title": "Murder", "description": "Punishment for murder", "punishment": "Death or life imprisonment", "keywords": ["kill", "murder", "death", "homicide", "killing"]},
-    {"section": "304", "title": "Culpable homicide not amounting to murder", "description": "Punishment for culpable homicide", "punishment": "Imprisonment up to 10 years or life", "keywords": ["kill", "death", "homicide", "culpable"]},
-    {"section": "307", "title": "Attempt to murder", "description": "Attempt to commit murder", "punishment": "Imprisonment up to 10 years", "keywords": ["attempt", "kill", "murder", "try to kill"]},
-    {"section": "323", "title": "Punishment for voluntarily causing hurt", "description": "Causing hurt voluntarily", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["hurt", "assault", "hit", "beat", "attack", "injury"]},
-    {"section": "324", "title": "Voluntarily causing hurt by dangerous weapons", "description": "Causing hurt with dangerous weapons", "punishment": "Imprisonment up to 3 years", "keywords": ["hurt", "weapon", "knife", "assault", "attack"]},
-    {"section": "325", "title": "Punishment for voluntarily causing grievous hurt", "description": "Causing grievous hurt", "punishment": "Imprisonment up to 7 years", "keywords": ["hurt", "grievous", "serious injury", "assault"]},
-    {"section": "354", "title": "Assault or criminal force to woman", "description": "Assault or criminal force with intent to outrage modesty", "punishment": "Imprisonment up to 2 years", "keywords": ["assault", "woman", "modesty", "molestation", "harassment"]},
-    {"section": "376", "title": "Punishment for rape", "description": "Sexual assault", "punishment": "Imprisonment not less than 10 years, may extend to life", "keywords": ["rape", "sexual assault", "sexual violence"]},
-    {"section": "379", "title": "Punishment for theft", "description": "Theft of movable property", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["theft", "steal", "stealing", "rob", "loot"]},
-    {"section": "380", "title": "Theft in dwelling house", "description": "Theft in a building used as dwelling", "punishment": "Imprisonment up to 7 years", "keywords": ["theft", "burglary", "house theft", "steal from house"]},
-    {"section": "392", "title": "Punishment for robbery", "description": "Robbery or dacoity", "punishment": "Imprisonment up to 10 years", "keywords": ["robbery", "rob", "dacoity", "armed theft", "loot"]},
-    {"section": "420", "title": "Cheating and dishonestly inducing delivery of property", "description": "Cheating", "punishment": "Imprisonment up to 7 years", "keywords": ["cheat", "fraud", "deception", "dishonest", "scam"]},
-    {"section": "504", "title": "Intentional insult", "description": "Intentional insult to provoke breach of peace", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["insult", "provoke", "abuse", "verbal abuse"]},
-    {"section": "506", "title": "Punishment for criminal intimidation", "description": "Criminal intimidation", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["threat", "intimidation", "threaten", "blackmail"]}
+    // Murder & Homicide
+    {"section": "302", "title": "Murder", "description": "Punishment for murder", "punishment": "Death or life imprisonment", "keywords": ["kill", "murder", "death", "homicide", "killing", "murdered", "killed"]},
+    {"section": "304", "title": "Culpable homicide not amounting to murder", "description": "Punishment for culpable homicide", "punishment": "Imprisonment up to 10 years or life", "keywords": ["kill", "death", "homicide", "culpable", "unintentional death"]},
+    {"section": "304B", "title": "Dowry death", "description": "Death of woman due to dowry", "punishment": "Imprisonment not less than 7 years, may extend to life", "keywords": ["dowry", "dowry death", "bride death", "marriage death"]},
+    {"section": "307", "title": "Attempt to murder", "description": "Attempt to commit murder", "punishment": "Imprisonment up to 10 years", "keywords": ["attempt", "kill", "murder", "try to kill", "attempted murder"]},
+    {"section": "309", "title": "Attempt to commit suicide", "description": "Attempt to commit suicide", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["suicide", "self harm", "attempted suicide"]},
+    
+    // Assault & Hurt
+    {"section": "323", "title": "Punishment for voluntarily causing hurt", "description": "Causing hurt voluntarily", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["hurt", "assault", "hit", "beat", "attack", "injury", "beating", "fight"]},
+    {"section": "324", "title": "Voluntarily causing hurt by dangerous weapons", "description": "Causing hurt with dangerous weapons", "punishment": "Imprisonment up to 3 years", "keywords": ["hurt", "weapon", "knife", "assault", "attack", "blade", "gun", "rod"]},
+    {"section": "325", "title": "Punishment for voluntarily causing grievous hurt", "description": "Causing grievous hurt", "punishment": "Imprisonment up to 7 years", "keywords": ["hurt", "grievous", "serious injury", "assault", "severe injury"]},
+    {"section": "326", "title": "Voluntarily causing grievous hurt by dangerous weapons", "description": "Causing grievous hurt with weapons", "punishment": "Imprisonment for life or up to 10 years", "keywords": ["grievous hurt", "weapon", "knife", "acid", "severe assault"]},
+    
+    // Sexual Offences
+    {"section": "354", "title": "Assault or criminal force to woman", "description": "Assault or criminal force with intent to outrage modesty", "punishment": "Imprisonment up to 2 years", "keywords": ["assault", "woman", "modesty", "molestation", "harassment", "touch", "inappropriate"]},
+    {"section": "354A", "title": "Sexual harassment", "description": "Sexual harassment of women", "punishment": "Imprisonment up to 3 years", "keywords": ["sexual harassment", "harassment", "unwanted advances", "workplace harassment"]},
+    {"section": "354B", "title": "Assault to disrobe woman", "description": "Assault with intent to disrobe", "punishment": "Imprisonment not less than 3 years, may extend to 7 years", "keywords": ["disrobe", "strip", "undress", "modesty", "assault woman"]},
+    {"section": "354C", "title": "Voyeurism", "description": "Watching or capturing private acts", "punishment": "Imprisonment not less than 1 year, may extend to 3 years", "keywords": ["voyeurism", "watch", "capture", "privacy", "video", "photo", "peeping"]},
+    {"section": "354D", "title": "Stalking", "description": "Following or monitoring women", "punishment": "Imprisonment up to 3 years", "keywords": ["stalking", "follow", "monitor", "harass", "pursue", "chase"]},
+    {"section": "376", "title": "Punishment for rape", "description": "Sexual assault", "punishment": "Imprisonment not less than 10 years, may extend to life", "keywords": ["rape", "sexual assault", "sexual violence", "forced"]},
+    {"section": "509", "title": "Insulting modesty of woman", "description": "Words, gestures to insult modesty", "punishment": "Imprisonment up to 3 years", "keywords": ["insult", "woman", "modesty", "gesture", "words", "comment"]},
+    
+    // Theft & Robbery
+    {"section": "378", "title": "Theft", "description": "Taking movable property dishonestly", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["theft", "steal", "stealing", "stolen", "take"]},
+    {"section": "379", "title": "Punishment for theft", "description": "Theft of movable property", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["theft", "steal", "stealing", "rob", "loot", "stolen"]},
+    {"section": "380", "title": "Theft in dwelling house", "description": "Theft in a building used as dwelling", "punishment": "Imprisonment up to 7 years", "keywords": ["theft", "burglary", "house theft", "steal from house", "home theft"]},
+    {"section": "381", "title": "Theft by clerk or servant", "description": "Theft by employee", "punishment": "Imprisonment up to 7 years", "keywords": ["theft", "employee theft", "servant theft", "insider theft"]},
+    {"section": "382", "title": "Theft after preparation for hurt", "description": "Theft with preparation to cause hurt", "punishment": "Imprisonment up to 10 years", "keywords": ["theft", "hurt", "preparation", "armed theft"]},
+    {"section": "392", "title": "Punishment for robbery", "description": "Robbery or dacoity", "punishment": "Imprisonment up to 10 years", "keywords": ["robbery", "rob", "dacoity", "armed theft", "loot", "looting"]},
+    {"section": "396", "title": "Dacoity with murder", "description": "Dacoity where murder occurs", "punishment": "Death or life imprisonment", "keywords": ["dacoity", "murder", "robbery murder", "gang robbery"]},
+    
+    // Cheating & Fraud
+    {"section": "415", "title": "Cheating", "description": "Cheating by deception", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["cheat", "fraud", "deception", "deceive", "trick"]},
+    {"section": "417", "title": "Punishment for cheating", "description": "Cheating someone", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["cheat", "fraud", "deception", "deceive"]},
+    {"section": "418", "title": "Cheating with knowledge", "description": "Cheating where accused knows damage will result", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["cheat", "fraud", "knowing damage", "intentional fraud"]},
+    {"section": "420", "title": "Cheating and dishonestly inducing delivery of property", "description": "Cheating", "punishment": "Imprisonment up to 7 years", "keywords": ["cheat", "fraud", "deception", "dishonest", "scam", "property fraud"]},
+    
+    // Kidnapping & Abduction
+    {"section": "363", "title": "Punishment for kidnapping", "description": "Kidnapping from lawful guardianship", "punishment": "Imprisonment up to 7 years", "keywords": ["kidnap", "kidnapping", "abduct", "abduction", "child abduction"]},
+    {"section": "364", "title": "Kidnapping for murder", "description": "Kidnapping with intent to murder", "punishment": "Life imprisonment or death", "keywords": ["kidnap", "murder", "kidnapping murder"]},
+    {"section": "366", "title": "Kidnapping woman", "description": "Kidnapping woman to compel marriage", "punishment": "Imprisonment up to 10 years", "keywords": ["kidnap", "woman", "forced marriage", "abduct woman"]},
+    {"section": "367", "title": "Kidnapping for slavery", "description": "Kidnapping to subject to slavery", "punishment": "Imprisonment up to 10 years", "keywords": ["kidnap", "slavery", "forced labor", "trafficking"]},
+    
+    // Extortion
+    {"section": "383", "title": "Extortion", "description": "Intentionally putting person in fear to commit extortion", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["extortion", "threat", "demand money", "force", "intimidate"]},
+    {"section": "384", "title": "Punishment for extortion", "description": "Extortion", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["extortion", "threat", "demand", "force payment"]},
+    {"section": "385", "title": "Putting person in fear of injury", "description": "Putting person in fear to commit extortion", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["threat", "fear", "injury threat", "extortion"]},
+    
+    // Property Damage
+    {"section": "425", "title": "Mischief", "description": "Causing wrongful loss or damage", "punishment": "Imprisonment up to 3 months or fine", "keywords": ["damage", "mischief", "property damage", "destroy"]},
+    {"section": "427", "title": "Mischief causing damage", "description": "Mischief causing loss of fifty rupees or upwards", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["damage", "property", "mischief", "destruction"]},
+    {"section": "435", "title": "Mischief by fire", "description": "Mischief by fire or explosive substance", "punishment": "Imprisonment up to 7 years", "keywords": ["fire", "arson", "burn", "explosion", "explosive"]},
+    {"section": "436", "title": "Mischief by fire to dwelling house", "description": "Mischief by fire with intent to destroy house", "punishment": "Life imprisonment or imprisonment up to 10 years", "keywords": ["fire", "arson", "burn house", "dwelling fire"]},
+    
+    // Threats & Intimidation
+    {"section": "503", "title": "Criminal intimidation", "description": "Threatening with injury to person, reputation or property", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["threat", "intimidation", "threaten", "intimidate", "scare"]},
+    {"section": "504", "title": "Intentional insult", "description": "Intentional insult to provoke breach of peace", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["insult", "provoke", "abuse", "verbal abuse", "intentional insult"]},
+    {"section": "505", "title": "Public mischief", "description": "Statements conducing to public mischief", "punishment": "Imprisonment up to 3 years or fine", "keywords": ["public mischief", "rumor", "false statement", "incite"]},
+    {"section": "506", "title": "Punishment for criminal intimidation", "description": "Criminal intimidation", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["threat", "intimidation", "threaten", "blackmail", "criminal threat"]},
+    
+    // Dowry & Women's Rights
+    {"section": "498A", "title": "Husband or relative subjecting woman to cruelty", "description": "Cruelty by husband or relatives", "punishment": "Imprisonment up to 3 years", "keywords": ["dowry", "cruelty", "harassment", "domestic violence", "husband abuse", "in-laws"]},
+    
+    // Trespass
+    {"section": "441", "title": "Criminal trespass", "description": "Entering property with intent to commit offense", "punishment": "Imprisonment up to 3 months or fine", "keywords": ["trespass", "enter", "property", "intrusion", "illegal entry"]},
+    {"section": "447", "title": "Punishment for criminal trespass", "description": "Criminal trespass", "punishment": "Imprisonment up to 3 months or fine", "keywords": ["trespass", "enter property", "intrusion"]},
+    {"section": "448", "title": "House trespass", "description": "Trespass for committing offense punishable with imprisonment", "punishment": "Imprisonment up to 1 year or fine", "keywords": ["trespass", "house", "enter house", "home intrusion"]},
+    
+    // Forgery & Document Fraud
+    {"section": "463", "title": "Forgery", "description": "Making false document with intent to cause damage", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["forgery", "fake", "false document", "counterfeit"]},
+    {"section": "465", "title": "Punishment for forgery", "description": "Forgery", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["forgery", "fake document", "forged", "false"]},
+    {"section": "467", "title": "Forgery of valuable security", "description": "Forgery of valuable security, will, etc", "punishment": "Life imprisonment or imprisonment up to 10 years", "keywords": ["forgery", "document", "will", "valuable security", "fake will"]},
+    {"section": "468", "title": "Forgery for cheating", "description": "Forgery for purpose of cheating", "punishment": "Imprisonment up to 7 years", "keywords": ["forgery", "cheat", "fake document", "fraud"]},
+    {"section": "471", "title": "Using forged document", "description": "Using as genuine a forged document", "punishment": "Same as forgery", "keywords": ["use fake", "forged document", "false document", "use forgery"]},
+    
+    // Public Nuisance & Traffic
+    {"section": "268", "title": "Public nuisance", "description": "Public nuisance", "punishment": "Fine", "keywords": ["public nuisance", "disturbance", "common injury"]},
+    {"section": "279", "title": "Rash driving", "description": "Rash driving on public way", "punishment": "Imprisonment up to 6 months or fine", "keywords": ["rash driving", "negligent driving", "accident", "vehicle", "car accident", "driving"]},
+    {"section": "304A", "title": "Death by negligence", "description": "Causing death by negligence", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["negligence", "accident death", "negligent death", "unintentional death"]},
+    
+    // Obscenity
+    {"section": "292", "title": "Sale of obscene material", "description": "Sale, etc., of obscene books", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["obscene", "pornography", "vulgar", "indecent"]},
+    {"section": "294", "title": "Obscene acts", "description": "Obscene acts in public place", "punishment": "Imprisonment up to 3 months or fine", "keywords": ["obscene", "public", "indecent", "vulgar act"]},
+    
+    // Defamation
+    {"section": "499", "title": "Defamation", "description": "Making or publishing defamatory statement", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["defamation", "slander", "libel", "false accusation", "reputation damage"]},
+    {"section": "500", "title": "Punishment for defamation", "description": "Defamation", "punishment": "Imprisonment up to 2 years or fine", "keywords": ["defamation", "slander", "libel", "defame"]}
 ];
 
 let currentUser = null;
@@ -341,15 +414,41 @@ class AIIPCService {
                 messages: [
                     {
                         role: 'system',
-                        content: `You are an expert on Indian Penal Code. Return relevant IPC sections as JSON array only. Format: [{"section": "302", "title": "Murder", "description": "...", "punishment": "...", "keywords": ["kill"]}]`
+                        content: `You are an expert on Indian Penal Code (IPC) and criminal law in India. Analyze the incident description and return EXACTLY 3 most relevant IPC sections as a JSON array.
+
+IMPORTANT: Return ONLY the JSON array, nothing else. No explanations, no markdown, just the JSON.
+
+Format EXACTLY like this:
+[{"section": "302", "title": "Murder", "description": "Punishment for murder", "punishment": "Death or life imprisonment", "keywords": ["kill", "murder", "death"]}]
+
+Cover ALL major crime categories:
+- Murder/Homicide (302, 304, 307, 309)
+- Assault/Hurt (323, 324, 325, 326, 355)
+- Sexual Offences (354, 376, 509, 354A, 354B, 354C, 354D)
+- Theft/Robbery (378, 379, 380, 381, 382, 392, 393, 394, 395, 396, 397)
+- Cheating/Fraud (415, 416, 417, 418, 419, 420, 421)
+- Extortion/Kidnapping (383, 384, 385, 363, 364, 365, 366, 367, 368)
+- Property Damage (425, 426, 427, 428, 429, 430, 435, 436, 438)
+- Criminal Intimidation/Threat (503, 504, 505, 506, 507, 508)
+- Defamation (499, 500, 501, 502)
+- Trespass (441, 442, 443, 447, 448)
+- Forgery (463, 464, 465, 466, 467, 468, 469, 470, 471, 473, 474, 475)
+- Public Nuisance (268, 269, 270, 271, 272, 273, 278, 279, 283, 285, 286)
+- Obscenity (292, 293, 294)
+- Corruption (161, 162, 163, 164, 165, 166, 167, 168, 169)
+- Dowry (304B, 498A)
+- Sedition/State Offences (121, 121A, 124A, 153A, 153B)
+- Riots (141, 143, 144, 145, 146, 147, 148, 149)
+
+Return ONLY the top 3 most relevant sections based on incident description.`
                     },
                     {
                         role: 'user',
-                        content: keyword
+                        content: `Analyze this incident and return EXACTLY 3 most relevant IPC sections as JSON array: "${keyword}"`
                     }
                 ],
-                temperature: AI_CONFIG.groq.temperature,
-                max_tokens: AI_CONFIG.groq.maxTokens
+                temperature: 0.3,
+                max_tokens: 1000
             })
         });
 
