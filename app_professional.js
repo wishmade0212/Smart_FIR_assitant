@@ -553,50 +553,265 @@ function handleListAllIPC() {
 }
 
 // ========================================
-// FIR Management
+// FIR Management - Enhanced with AI Suggestions
 // ========================================
 function startFIRCreation() {
     addMessage('user', 'create fir');
-    firCreationState = { step: 1, data: {} };
-    addMessage('system', '📝 Creating new FIR. Step 1/5: Enter complainant name:');
+    firCreationState = { step: 1, data: {}, suggestedIPC: [] };
+    addMessage('system', '📝 Creating new FIR - Smart Assistant Mode');
+    addMessage('system', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    addMessage('system', '<strong>Step 1/7:</strong> Enter complainant name:');
 }
 
 async function handleFIRCreationStep(input) {
     const step = firCreationState.step;
     
     if (step === 1) {
+        // Step 1: Complainant Name
         firCreationState.data.complainantName = input;
         firCreationState.step = 2;
-        addMessage('system', 'Step 2/5: Enter suspect name:');
+        addMessage('system', '<strong>Step 2/7:</strong> Enter complainant contact number:');
+        
     } else if (step === 2) {
-        firCreationState.data.suspectName = input;
+        // Step 2: Complainant Contact
+        firCreationState.data.complainantContact = input;
         firCreationState.step = 3;
-        addMessage('system', 'Step 3/5: Enter incident description:');
+        addMessage('system', '<strong>Step 3/7:</strong> Describe the incident (be specific, include keywords like "kill", "theft", "assault"):');
+        
     } else if (step === 3) {
+        // Step 3: Incident Description + Auto IPC Suggestion
         firCreationState.data.incidentDescription = input;
+        
+        addMessage('system', '🔍 Analyzing incident description...');
+        
+        // Auto-detect IPC sections from keywords
+        const suggestedSections = await analyzeIncidentAndSuggestIPC(input);
+        firCreationState.suggestedIPC = suggestedSections;
+        
+        if (suggestedSections.length > 0) {
+            addMessage('system', '<div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 10px 0;"><strong>💡 Suggested IPC Sections:</strong></div>');
+            suggestedSections.forEach((section, index) => {
+                const msg = `
+                    <div style="background: white; border-left: 4px solid #ff9800; padding: 12px; margin: 8px 0; border-radius: 5px; cursor: pointer;" onclick="quickCommand('${index + 1}')">
+                        <strong>${index + 1}. IPC ${section.section} - ${section.title}</strong>
+                        <br><small style="color: #666;">${section.description}</small>
+                        <br><strong>Punishment:</strong> ${section.punishment}
+                    </div>
+                `;
+                addMessage('system', msg);
+            });
+            addMessage('system', '<strong>Step 4/7:</strong> Enter suspect name (or type "unknown"):');
+        } else {
+            addMessage('system', '⚠️ No IPC sections auto-detected. You can manually enter later.');
+            addMessage('system', '<strong>Step 4/7:</strong> Enter suspect name (or type "unknown"):');
+        }
+        
         firCreationState.step = 4;
-        addMessage('system', 'Step 4/5: Enter IPC section (e.g., 302):');
+        
     } else if (step === 4) {
-        firCreationState.data.ipcSection = input;
+        // Step 4: Suspect Name + Criminal History Check
+        firCreationState.data.suspectName = input;
+        
+        if (input.toLowerCase() !== 'unknown') {
+            addMessage('system', '🔎 Checking suspect\'s criminal history...');
+            
+            // Search for previous FIRs involving this suspect
+            const previousCases = searchSuspectHistory(input);
+            
+            if (previousCases.length > 0) {
+                addMessage('system', `<div style="background: #ffebee; border: 2px solid #f44336; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <strong>⚠️ CRIMINAL HISTORY FOUND!</strong>
+                    <br><br>
+                    <strong>${input}</strong> has <strong>${previousCases.length}</strong> previous case(s):
+                </div>`);
+                
+                previousCases.forEach((fir, index) => {
+                    const caseMsg = `
+                        <div style="background: white; border-left: 4px solid #f44336; padding: 12px; margin: 8px 0; border-radius: 5px;">
+                            <strong>Case ${index + 1}: ${fir.id}</strong>
+                            <br><strong>IPC:</strong> ${fir.ipcSection}
+                            <br><strong>Status:</strong> ${fir.status}
+                            <br><strong>Date:</strong> ${fir.dateRegistered}
+                            <br><small>${fir.incidentDescription?.substring(0, 100)}...</small>
+                        </div>
+                    `;
+                    addMessage('system', caseMsg);
+                });
+                
+                addMessage('system', `<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    <strong>⚖️ Recommendation:</strong> Consider stricter punishment due to repeat offense.
+                </div>`);
+            } else {
+                addMessage('system', `<div style="background: #e8f5e9; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    ✅ No previous criminal records found for <strong>${input}</strong> (First-time offender)
+                </div>`);
+            }
+        }
+        
         firCreationState.step = 5;
-        addMessage('system', 'Step 5/5: Enter status (Registered/Under Investigation/Closed):');
+        addMessage('system', '<strong>Step 5/7:</strong> Enter suspect age:');
+        
     } else if (step === 5) {
-        firCreationState.data.status = input;
-        submitFIR();
+        // Step 5: Suspect Age
+        firCreationState.data.suspectAge = input;
+        firCreationState.step = 6;
+        addMessage('system', '<strong>Step 6/7:</strong> Enter suspect address:');
+        
+    } else if (step === 6) {
+        // Step 6: Suspect Address
+        firCreationState.data.suspectAddress = input;
+        firCreationState.step = 7;
+        
+        // Show suggested IPC sections again
+        if (firCreationState.suggestedIPC.length > 0) {
+            addMessage('system', '<div style="background: #e3f2fd; padding: 10px; border-radius: 5px;"><strong>💡 Suggested IPC Sections (from Step 3):</strong></div>');
+            firCreationState.suggestedIPC.forEach((section, index) => {
+                addMessage('system', `${index + 1}. IPC ${section.section} - ${section.title}`);
+            });
+            addMessage('system', '<strong>Step 7/7:</strong> Select IPC section number (e.g., 1) or type custom (e.g., 302):');
+        } else {
+            addMessage('system', '<strong>Step 7/7:</strong> Enter IPC section (e.g., 302):');
+        }
+        
+    } else if (step === 7) {
+        // Step 7: IPC Section Selection
+        const ipcInput = input.trim();
+        
+        // Check if user selected from suggestions (number) or custom IPC
+        if (!isNaN(ipcInput) && firCreationState.suggestedIPC.length > 0) {
+            const index = parseInt(ipcInput) - 1;
+            if (index >= 0 && index < firCreationState.suggestedIPC.length) {
+                const selected = firCreationState.suggestedIPC[index];
+                firCreationState.data.ipcSection = selected.section;
+                firCreationState.data.ipcTitle = selected.title;
+                firCreationState.data.ipcPunishment = selected.punishment;
+            } else {
+                firCreationState.data.ipcSection = ipcInput;
+            }
+        } else {
+            firCreationState.data.ipcSection = ipcInput;
+        }
+        
+        // Auto-generate FIR and show template
+        generateAndDisplayFIR();
     }
 }
 
-function submitFIR() {
+// Analyze incident description and suggest IPC sections
+async function analyzeIncidentAndSuggestIPC(description) {
+    try {
+        const result = await aiService.searchIPC(description);
+        if (result.success && result.sections.length > 0) {
+            return result.sections.slice(0, 3); // Top 3 suggestions
+        }
+    } catch (error) {
+        console.error('IPC suggestion failed:', error);
+    }
+    
+    // Fallback: keyword matching from static data
+    const lowerDesc = description.toLowerCase();
+    const matches = STATIC_IPC_SECTIONS.filter(section => 
+        section.keywords.some(keyword => lowerDesc.includes(keyword))
+    );
+    
+    return matches.slice(0, 3);
+}
+
+// Search suspect's criminal history
+function searchSuspectHistory(suspectName) {
+    const lowerName = suspectName.toLowerCase();
+    return firStorage.filter(fir => 
+        fir.suspectName && fir.suspectName.toLowerCase().includes(lowerName)
+    );
+}
+
+// Generate professional FIR template
+function generateAndDisplayFIR() {
     const fir = {
         id: 'FIR-' + firIdCounter++,
         ...firCreationState.data,
         dateRegistered: new Date().toISOString().split('T')[0],
-        createdBy: currentUser.email
+        timeRegistered: new Date().toLocaleTimeString(),
+        status: 'Registered',
+        createdBy: currentUser.email,
+        officerName: currentUser.name
     };
     
+    // Save to storage
     firStorage.push(fir);
     localStorage.setItem('fir_records', JSON.stringify(firStorage));
-    addMessage('system', `✅ FIR created successfully! ID: ${fir.id}`);
+    
+    // Display professional FIR template
+    const firTemplate = `
+        <div style="background: white; border: 3px solid #333; padding: 30px; margin: 20px 0; border-radius: 10px; font-family: 'Courier New', monospace; max-width: 800px;">
+            <div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #1a237e;">FIRST INFORMATION REPORT</h2>
+                <div style="font-size: 12px; margin-top: 5px;">Under Section 154 Cr.P.C.</div>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5; width: 40%;"><strong>FIR No.</strong></td>
+                    <td style="padding: 8px; border: 1px solid #333;"><strong>${fir.id}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Date of Registration</strong></td>
+                    <td style="padding: 8px; border: 1px solid #333;">${fir.dateRegistered} at ${fir.timeRegistered}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Police Station</strong></td>
+                    <td style="padding: 8px; border: 1px solid #333;">Central Police Station</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Registered By</strong></td>
+                    <td style="padding: 8px; border: 1px solid #333;">${fir.officerName}</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 5px;">
+                <h3 style="margin-top: 0; color: #2e7d32;">COMPLAINANT DETAILS</h3>
+                <p><strong>Name:</strong> ${fir.complainantName}</p>
+                <p><strong>Contact:</strong> ${fir.complainantContact}</p>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #ffebee; border: 2px solid #f44336; border-radius: 5px;">
+                <h3 style="margin-top: 0; color: #c62828;">SUSPECT/ACCUSED DETAILS</h3>
+                <p><strong>Name:</strong> ${fir.suspectName}</p>
+                <p><strong>Age:</strong> ${fir.suspectAge} years</p>
+                <p><strong>Address:</strong> ${fir.suspectAddress}</p>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ff9800; border-radius: 5px;">
+                <h3 style="margin-top: 0; color: #e65100;">INCIDENT DETAILS</h3>
+                <p style="text-align: justify; line-height: 1.6;">${fir.incidentDescription}</p>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border: 2px solid #2196f3; border-radius: 5px;">
+                <h3 style="margin-top: 0; color: #0d47a1;">SECTIONS APPLIED</h3>
+                <p><strong>IPC Section:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                ${fir.ipcPunishment ? '<p><strong>Punishment:</strong> ' + fir.ipcPunishment + '</p>' : ''}
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; border: 2px solid #333; border-radius: 5px;">
+                <p><strong>Status:</strong> <span style="color: #4caf50; font-weight: bold;">${fir.status}</span></p>
+                <p><strong>Action:</strong> Investigation Initiated</p>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 15px; border-top: 2px solid #333; text-align: right;">
+                <p><strong>Signature of Officer</strong></p>
+                <p style="margin-top: 30px;">_______________________</p>
+                <p style="font-size: 12px;">${fir.officerName}<br>Police Officer</p>
+            </div>
+        </div>
+    `;
+    
+    addMessage('system', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    addMessage('system', '<div style="text-align: center;"><strong style="color: #4caf50; font-size: 18px;">✅ FIR CREATED SUCCESSFULLY!</strong></div>');
+    addMessage('system', firTemplate);
+    addMessage('system', `<div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 5px; margin: 10px 0;">
+        <strong>FIR ID: ${fir.id}</strong><br>
+        <small>Use command "fir ${fir.id}" to view this FIR anytime</small>
+    </div>`);
     
     firCreationState = null;
 }
@@ -627,20 +842,72 @@ function handleGetFIR(firId) {
     const fir = firStorage.find(f => f.id === firId);
     
     if (fir) {
-        const message = `
-            <div style="background: white; border: 2px solid #667eea; padding: 20px; margin: 10px 0; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h3>FIR Details - ${fir.id}</h3>
-                <p><strong>Complainant:</strong> ${fir.complainantName}</p>
-                <p><strong>Suspect:</strong> ${fir.suspectName}</p>
-                <p><strong>Incident:</strong> ${fir.incidentDescription}</p>
-                <p><strong>IPC Section:</strong> ${fir.ipcSection}</p>
-                <p><strong>Status:</strong> ${fir.status}</p>
-                <p><strong>Date:</strong> ${fir.dateRegistered}</p>
+        // Display full professional FIR template
+        const firTemplate = `
+            <div style="background: white; border: 3px solid #333; padding: 30px; margin: 20px 0; border-radius: 10px; font-family: 'Courier New', monospace; max-width: 800px;">
+                <div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #1a237e;">FIRST INFORMATION REPORT</h2>
+                    <div style="font-size: 12px; margin-top: 5px;">Under Section 154 Cr.P.C.</div>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5; width: 40%;"><strong>FIR No.</strong></td>
+                        <td style="padding: 8px; border: 1px solid #333;"><strong>${fir.id}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Date of Registration</strong></td>
+                        <td style="padding: 8px; border: 1px solid #333;">${fir.dateRegistered}${fir.timeRegistered ? ' at ' + fir.timeRegistered : ''}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Police Station</strong></td>
+                        <td style="padding: 8px; border: 1px solid #333;">Central Police Station</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #333; background: #f5f5f5;"><strong>Registered By</strong></td>
+                        <td style="padding: 8px; border: 1px solid #333;">${fir.officerName || fir.createdBy}</td>
+                    </tr>
+                </table>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 5px;">
+                    <h3 style="margin-top: 0; color: #2e7d32;">COMPLAINANT DETAILS</h3>
+                    <p><strong>Name:</strong> ${fir.complainantName}</p>
+                    ${fir.complainantContact ? '<p><strong>Contact:</strong> ' + fir.complainantContact + '</p>' : ''}
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #ffebee; border: 2px solid #f44336; border-radius: 5px;">
+                    <h3 style="margin-top: 0; color: #c62828;">SUSPECT/ACCUSED DETAILS</h3>
+                    <p><strong>Name:</strong> ${fir.suspectName}</p>
+                    ${fir.suspectAge ? '<p><strong>Age:</strong> ' + fir.suspectAge + ' years</p>' : ''}
+                    ${fir.suspectAddress ? '<p><strong>Address:</strong> ' + fir.suspectAddress + '</p>' : ''}
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 2px solid #ff9800; border-radius: 5px;">
+                    <h3 style="margin-top: 0; color: #e65100;">INCIDENT DETAILS</h3>
+                    <p style="text-align: justify; line-height: 1.6;">${fir.incidentDescription}</p>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border: 2px solid #2196f3; border-radius: 5px;">
+                    <h3 style="margin-top: 0; color: #0d47a1;">SECTIONS APPLIED</h3>
+                    <p><strong>IPC Section:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                    ${fir.ipcPunishment ? '<p><strong>Punishment:</strong> ' + fir.ipcPunishment + '</p>' : ''}
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; border: 2px solid #333; border-radius: 5px;">
+                    <p><strong>Status:</strong> <span style="color: ${fir.status === 'Closed' ? '#f44336' : '#4caf50'}; font-weight: bold;">${fir.status}</span></p>
+                    <p><strong>Action:</strong> ${fir.status === 'Closed' ? 'Case Closed' : 'Investigation Ongoing'}</p>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 15px; border-top: 2px solid #333; text-align: right;">
+                    <p><strong>Signature of Officer</strong></p>
+                    <p style="margin-top: 30px;">_______________________</p>
+                    <p style="font-size: 12px;">${fir.officerName || fir.createdBy}<br>Police Officer</p>
+                </div>
             </div>
         `;
-        addMessage('system', message);
+        addMessage('system', firTemplate);
     } else {
-        addMessage('system', `FIR not found: ${firId}`);
+        addMessage('system', `❌ FIR not found: ${firId}`);
     }
 }
 
