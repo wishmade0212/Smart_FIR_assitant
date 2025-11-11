@@ -1,0 +1,37 @@
+:root{
+  --bg:#f6f7fb;
+  --panel:#fff;
+  --accent:#2b6ef6;
+  --muted:#6b7280;
+}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);margin:0;color:#111}
+
+/* Login screen */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{background:var(--panel);padding:32px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:400px;width:100%}
+.login-box h1{margin:0 0 8px;font-size:24px;text-align:center}
+.login-box h3{margin:0 0 20px;font-size:16px;color:var(--muted);text-align:center}
+.login-box form{display:flex;flex-direction:column;gap:12px}
+.login-box input{padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px}
+.login-hints{margin-top:20px;font-size:13px;color:var(--muted);line-height:1.6}
+.login-hints code{background:#f3f4f6;padding:2px 6px;border-radius:4px}
+
+/* Main app */
+.app{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:20px;min-height:100vh}
+header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:20px}
+.controls{display:flex;gap:8px;align-items:center}
+.user-role{background:#10b981;color:#fff;padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600}
+button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+button[aria-disabled]{opacity:.6}
+.chat-area{background:var(--panel);border-radius:10px;padding:12px;display:flex;flex-direction:column}
+.messages{flex:1;overflow:auto;min-height:380px;padding:8px;border:1px solid #eee;border-radius:8px;background:#fff}
+.message{margin:8px 0;padding:8px 12px;border-radius:8px;max-width:75%}
+.message.user{background:#e6f0ff;margin-left:auto}
+.message.bot{background:#f3f4f6}
+.chat-form{display:flex;margin-top:10px;gap:8px}
+.chat-form input{flex:1;padding:10px;border-radius:8px;border:1px solid #ddd}
+.sidebar{background:var(--panel);padding:12px;border-radius:10px}
+.sidebar ul{padding-left:20px;line-height:1.8}
+pre{white-space:pre-wrap}

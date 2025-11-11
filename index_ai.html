@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIR Assistant - AI Powered 🤖</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional styles for AI features */
+        .ai-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .ipc-result {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        
+        .ipc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .ipc-result .badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        
+        .ipc-result-compact {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .fir-result {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+        }
+        
+        .fir-detail {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .help-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .help-box h3 {
+            margin-top: 0;
+            color: #d63031;
+        }
+        
+        .help-box ul {
+            margin-left: 20px;
+        }
+        
+        .setup-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .setup-warning strong {
+            color: #856404;
+        }
+        
+        .ai-config-panel {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        
+        .ai-config-panel h4 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .ai-config-panel code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63031;
+        }
+        
+        .btn-logout {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+        
+        .btn-logout:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <div class="ai-config-panel">
+                <h4>🤖 AI-Powered FIR Assistant</h4>
+                <p><strong>Setup Instructions:</strong></p>
+                <ol style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
+                    <li>Get free Groq API key: <a href="https://console.groq.com" target="_blank" style="color: #2196f3;">console.groq.com</a></li>
+                    <li>Open <code>app_api_ai.js</code></li>
+                    <li>Replace <code>YOUR_GROQ_API_KEY_HERE</code> with your key</li>
+                    <li>Save and refresh this page</li>
+                </ol>
+                <p style="margin: 10px 0; font-size: 13px;">
+                    <strong>Without API key:</strong> App will use static database (still works!)<br>
+                    <strong>With API key:</strong> AI understands natural language queries 🚀
+                </p>
+            </div>
+            
+            <h1>🚔 FIR Assistant <span class="ai-badge">🤖 AI Powered</span></h1>
+            <p style="text-align: center; color: #666; margin-bottom: 30px;">
+                Intelligent IPC Search with Data Structures
+            </p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required placeholder="admin or user">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="police123 or user123">
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+            
+            <div class="demo-credentials">
+                <p><strong>Demo Credentials:</strong></p>
+                <p>👮 Admin: <code>admin</code> / <code>police123</code> (can create FIRs)</p>
+                <p>👤 User: <code>user</code> / <code>user123</code> (can search IPC only)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Screen -->
+    <div id="appScreen" class="screen" style="display: none;">
+        <div class="app-container">
+            <!-- Header -->
+            <div class="app-header">
+                <h2>🚔 FIR Assistant <span class="ai-badge">🤖 AI</span></h2>
+                <div id="userInfo"></div>
+            </div>
+
+            <div class="app-body">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <h3>Quick Commands</h3>
+                    <div class="command-list">
+                        <div class="command-item" onclick="document.getElementById('commandInput').value='help'; document.getElementById('sendBtn').click();">
+                            📚 Help
+                        </div>
+                        <div class="command-item" onclick="document.getElementById('commandInput').value='search ipc '; document.getElementById('commandInput').focus();">
+                            🔍 Search IPC (AI)
+                        </div>
+                        <div class="command-item" onclick="document.getElementById('commandInput').value='list ipc'; document.getElementById('sendBtn').click();">
+                            📋 List All IPC
+                        </div>
+                        <div class="command-item admin-only" onclick="document.getElementById('commandInput').value='create fir'; document.getElementById('sendBtn').click();">
+                            ✍️ Create FIR
+                        </div>
+                        <div class="command-item admin-only" onclick="document.getElementById('commandInput').value='list firs'; document.getElementById('sendBtn').click();">
+                            📂 List FIRs
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; font-size: 12px;">
+                        <h4 style="margin-top: 0; color: #1976d2;">💡 AI Examples:</h4>
+                        <ul style="margin: 0; padding-left: 20px;">
+                            <li>"kill" → Murder laws</li>
+                            <li>"theft" → Stealing laws</li>
+                            <li>"fraud" → Cheating laws</li>
+                            <li>"assault" → Hurt laws</li>
+                            <li>"rape" → Sexual assault</li>
+                        </ul>
+                        <p style="margin: 10px 0 0 0;">
+                            <strong>Try natural language:</strong><br>
+                            "someone stole my phone"<br>
+                            "hit by a car"
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="chat-container">
+                    <div id="chatArea" class="chat-area"></div>
+                    
+                    <div class="chat-input">
+                        <input 
+                            type="text" 
+                            id="commandInput" 
+                            placeholder="Type a command or search IPC (e.g., 'search ipc theft')..."
+                            autocomplete="off"
+                        >
+                        <button id="sendBtn" class="btn-send">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app_api_ai.js"></script>
+</body>
+</html>

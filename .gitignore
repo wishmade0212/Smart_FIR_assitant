@@ -1,0 +1,14 @@
+# FIR Assistant - Ignore Personal Config
+config.js
+*.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
