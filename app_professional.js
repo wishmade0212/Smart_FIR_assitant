@@ -693,6 +693,63 @@ async function parseCommand(input) {
         return;
     }
     
+    // NEW: Show all FIRs without filter
+    if (cmd === 'show all firs') {
+        handleShowAllFIRs();
+        return;
+    }
+    
+    // NEW: Filter FIRs by different criteria
+    if (cmd.startsWith('filter complainant ')) {
+        const name = input.replace(/filter complainant /i, '').trim();
+        if (name) {
+            handleFilterByComplainant(name);
+        } else {
+            addMessage('system', '⚠️ Please provide complainant name. Example: filter complainant John');
+        }
+        return;
+    }
+    
+    if (cmd.startsWith('filter suspect ')) {
+        const name = input.replace(/filter suspect /i, '').trim();
+        if (name) {
+            handleFilterBySuspect(name);
+        } else {
+            addMessage('system', '⚠️ Please provide suspect name. Example: filter suspect Ram');
+        }
+        return;
+    }
+    
+    if (cmd.startsWith('filter ipc ')) {
+        const ipc = input.replace(/filter ipc /i, '').trim();
+        if (ipc) {
+            handleFilterByIPC(ipc);
+        } else {
+            addMessage('system', '⚠️ Please provide IPC section. Example: filter ipc 302');
+        }
+        return;
+    }
+    
+    if (cmd.startsWith('filter date ')) {
+        const date = input.replace(/filter date /i, '').trim();
+        if (date) {
+            handleFilterByDate(date);
+        } else {
+            addMessage('system', '⚠️ Please provide date. Example: filter date 2025-11-11');
+        }
+        return;
+    }
+    
+    if (cmd.startsWith('filter status ')) {
+        const status = input.replace(/filter status /i, '').trim();
+        if (status) {
+            handleFilterByStatus(status);
+        } else {
+            addMessage('system', '⚠️ Please provide status. Example: filter status registered');
+        }
+        return;
+    }
+    
     // NEW: Search FIR by Complainant Name (Array - Chronological)
     if (cmd.startsWith('search complainant ') || cmd.startsWith('complainant ')) {
         const name = input.replace(/search complainant /i, '').replace(/complainant /i, '').trim();
@@ -1085,23 +1142,218 @@ function generateAndDisplayFIR() {
 function handleListFIRs() {
     addMessage('user', 'list firs');
     
-    if (firStorage.length > 0) {
-        addMessage('system', `Found ${firStorage.length} FIR(s):`);
-        
-        firStorage.forEach(fir => {
-            const message = `
-                <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 8px 0; border-radius: 5px;">
-                    <strong>FIR ${fir.id}</strong> | ${fir.status}
-                    <br>Complainant: ${fir.complainantName}
-                    <br>Suspect: ${fir.suspectName}
-                    <br>IPC: ${fir.ipcSection}
-                </div>
-            `;
-            addMessage('system', message);
-        });
-    } else {
+    if (firStorage.length === 0) {
         addMessage('system', 'No FIRs found. Create one with "create fir" command.');
+        return;
     }
+    
+    // Show filter options with enhanced UI
+    addMessage('system', `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 10px 0;">
+            <h3 style="margin: 0 0 15px 0;">📂 FIR Records Management</h3>
+            <p style="margin: 0; opacity: 0.9;">Total FIRs: <strong>${firStorage.length}</strong></p>
+        </div>
+    `);
+    
+    addMessage('system', `
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 10px 0; border-left: 4px solid #667eea;">
+            <h4 style="margin: 0 0 15px 0; color: #667eea;">🔍 Filter & Search Options</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <button onclick="quickCommand('filter complainant ')" style="background: #4caf50; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    👤 By Complainant Name
+                </button>
+                <button onclick="quickCommand('filter suspect ')" style="background: #f44336; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    🔴 By Suspect Name
+                </button>
+                <button onclick="quickCommand('filter ipc ')" style="background: #ff9800; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    ⚖️ By IPC Section
+                </button>
+                <button onclick="quickCommand('filter date ')" style="background: #2196f3; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    📅 By Date
+                </button>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                <strong>💡 Quick Commands:</strong><br>
+                <small>
+                • <code>filter complainant John</code> - Find by complainant name<br>
+                • <code>filter suspect Ram</code> - Find by suspect name<br>
+                • <code>filter ipc 302</code> - Find by IPC section<br>
+                • <code>filter date 2025-11-11</code> - Find by registration date<br>
+                • <code>filter status registered</code> - Find by status<br>
+                • <code>show all firs</code> - Display all FIRs without filter
+                </small>
+            </div>
+        </div>
+    `);
+    
+    // Show summary statistics
+    const complainants = [...new Set(firStorage.map(f => f.complainantName))].length;
+    const suspects = [...new Set(firStorage.map(f => f.suspectName))].length;
+    const ipcs = [...new Set(firStorage.map(f => f.ipcSection))].length;
+    
+    addMessage('system', `
+        <div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h4 style="margin: 0 0 10px 0; color: #333;">📊 Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 5px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #4caf50;">${complainants}</div>
+                    <div style="font-size: 12px; color: #666;">Unique Complainants</div>
+                </div>
+                <div style="background: #ffebee; padding: 15px; border-radius: 5px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #f44336;">${suspects}</div>
+                    <div style="font-size: 12px; color: #666;">Unique Suspects</div>
+                </div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #ff9800;">${ipcs}</div>
+                    <div style="font-size: 12px; color: #666;">IPC Sections Used</div>
+                </div>
+            </div>
+        </div>
+    `);
+    
+    addMessage('system', `
+        <div style="background: #e3f2fd; padding: 12px; border-radius: 5px; margin: 10px 0; text-align: center;">
+            <strong>Type a filter command above or <button onclick="quickCommand('show all firs')" style="background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Show All FIRs</button></strong>
+        </div>
+    `);
+}
+
+// New function to show all FIRs without filter
+function handleShowAllFIRs() {
+    addMessage('user', 'show all firs');
+    
+    if (firStorage.length === 0) {
+        addMessage('system', 'No FIRs found.');
+        return;
+    }
+    
+    addMessage('system', `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <strong>📋 All FIR Records (${firStorage.length} total)</strong>
+        </div>
+    `);
+    
+    firStorage.forEach((fir, index) => {
+        const message = `
+            <div style="background: white; border-left: 4px solid ${fir.status === 'Closed' ? '#9e9e9e' : '#4caf50'}; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <strong style="color: #667eea;">${index + 1}. ${fir.id}</strong>
+                    <span style="background: ${fir.status === 'Closed' ? '#9e9e9e' : '#4caf50'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px;">${fir.status}</span>
+                </div>
+                <p><strong>📅 Date:</strong> ${fir.dateRegistered}${fir.timeRegistered ? ' at ' + fir.timeRegistered : ''}</p>
+                <p><strong>👤 Complainant:</strong> ${fir.complainantName}</p>
+                <p><strong>🔴 Suspect:</strong> ${fir.suspectName}</p>
+                <p><strong>⚖️ IPC:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                    <button onclick="quickCommand('fir ${fir.id}')" style="background: #667eea; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">View Full Details</button>
+                </div>
+            </div>
+        `;
+        addMessage('system', message);
+    });
+}
+
+// ========================================
+// Filter FIRs by Different Criteria
+// ========================================
+function handleFilterByComplainant(name) {
+    addMessage('user', `filter complainant ${name}`);
+    
+    const lowerName = name.toLowerCase();
+    const results = firStorage.filter(fir => 
+        fir.complainantName && fir.complainantName.toLowerCase().includes(lowerName)
+    );
+    
+    displayFilteredResults('Complainant', name, results, '#4caf50');
+}
+
+function handleFilterBySuspect(name) {
+    addMessage('user', `filter suspect ${name}`);
+    
+    const lowerName = name.toLowerCase();
+    const results = firStorage.filter(fir => 
+        fir.suspectName && fir.suspectName.toLowerCase().includes(lowerName)
+    );
+    
+    displayFilteredResults('Suspect', name, results, '#f44336');
+}
+
+function handleFilterByIPC(ipc) {
+    addMessage('user', `filter ipc ${ipc}`);
+    
+    const results = firStorage.filter(fir => 
+        fir.ipcSection && fir.ipcSection.includes(ipc)
+    );
+    
+    displayFilteredResults('IPC Section', ipc, results, '#ff9800');
+}
+
+function handleFilterByDate(date) {
+    addMessage('user', `filter date ${date}`);
+    
+    const results = firStorage.filter(fir => 
+        fir.dateRegistered && fir.dateRegistered.includes(date)
+    );
+    
+    displayFilteredResults('Date', date, results, '#2196f3');
+}
+
+function handleFilterByStatus(status) {
+    addMessage('user', `filter status ${status}`);
+    
+    const lowerStatus = status.toLowerCase();
+    const results = firStorage.filter(fir => 
+        fir.status && fir.status.toLowerCase().includes(lowerStatus)
+    );
+    
+    displayFilteredResults('Status', status, results, '#9c27b0');
+}
+
+function displayFilteredResults(filterType, filterValue, results, color) {
+    if (results.length === 0) {
+        addMessage('system', `
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800;">
+                ⚠️ <strong>No FIRs found</strong><br>
+                No records match ${filterType}: "${filterValue}"
+            </div>
+        `);
+        return;
+    }
+    
+    addMessage('system', `
+        <div style="background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%); color: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            <strong>🔍 Filter Results: ${filterType}</strong><br>
+            <span style="font-size: 14px; opacity: 0.9;">Showing ${results.length} FIR(s) for "${filterValue}"</span>
+        </div>
+    `);
+    
+    results.forEach((fir, index) => {
+        const message = `
+            <div style="background: white; border-left: 4px solid ${color}; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <strong style="color: ${color};">${index + 1}. ${fir.id}</strong>
+                    <span style="background: ${fir.status === 'Closed' ? '#9e9e9e' : '#4caf50'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px;">${fir.status}</span>
+                </div>
+                <p><strong>📅 Date:</strong> ${fir.dateRegistered}${fir.timeRegistered ? ' at ' + fir.timeRegistered : ''}</p>
+                <p><strong>👤 Complainant:</strong> ${fir.complainantName}</p>
+                ${fir.complainantContact ? '<p><strong>📞 Contact:</strong> ' + fir.complainantContact + '</p>' : ''}
+                <p><strong>🔴 Suspect:</strong> ${fir.suspectName}</p>
+                <p><strong>⚖️ IPC Section:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                <p><strong>📝 Incident:</strong> ${fir.incidentDescription?.substring(0, 150)}${fir.incidentDescription?.length > 150 ? '...' : ''}</p>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                    <button onclick="quickCommand('fir ${fir.id}')" style="background: ${color}; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">View Full FIR</button>
+                </div>
+            </div>
+        `;
+        addMessage('system', message);
+    });
+    
+    addMessage('system', `
+        <div style="background: #f8f9fa; padding: 12px; border-radius: 5px; margin: 10px 0; text-align: center;">
+            <strong>Found ${results.length} matching record(s)</strong><br>
+            <button onclick="quickCommand('list firs')" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-top: 10px;">Back to Filter Options</button>
+        </div>
+    `);
 }
 
 // ========================================

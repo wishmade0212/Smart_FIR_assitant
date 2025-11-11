@@ -18,18 +18,19 @@ Your FIR Assistant is using **static keyword matching** instead of AI because th
 2. Click **"Create API Key"** button
 3. Give it a name: "FIR Assistant"
 4. Click "Create"
-5. **Copy the key** (starts with `gsk_...`)
+5. **Copy the key** (starts with `gsk_` followed by random characters)
 
 ### Step 3: Add to Your Code (30 seconds)
 1. Open file: `app_professional.js`
 2. Find line 13:
    ```javascript
-   apiKey: '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',
+   apiKey: 'YOUR_GROQ_API_KEY_HERE',
    ```
-3. Replace with your key:
+3. Replace with your key (example format):
    ```javascript
-   apiKey: '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',
+   apiKey: 'gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
    ```
+   ⚠️ **Note**: Replace the x's with your actual API key from Groq console
 4. Save the file
 5. Refresh your browser
 
@@ -83,9 +84,10 @@ Use environment variables or a config file:
 1. Create `config.js` (already in .gitignore):
    ```javascript
    const API_CONFIG = {
-       groqApiKey: 'gsk_your_real_key_here'
+       groqApiKey: 'gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
    };
    ```
+   ⚠️ Replace x's with your real API key
 
 2. Load it in `index.html`:
    ```html
