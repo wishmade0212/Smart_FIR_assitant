@@ -374,19 +374,27 @@ Your temporary code: ${code}`);
 // ========================================
 class AIIPCService {
     async searchIPC(keyword) {
+        console.log('🔍 AIIPCService.searchIPC called with:', keyword);
+        
         if (AI_CONFIG.cacheResults && aiCache.has(keyword.toLowerCase())) {
             console.log('📦 Using cached AI response');
             return aiCache.get(keyword.toLowerCase());
         }
 
         if (!AI_CONFIG.enabled || !AI_CONFIG.groq.apiKey || AI_CONFIG.groq.apiKey === 'YOUR_GROQ_API_KEY_HERE') {
-            console.log('🔧 AI disabled, using static data');
+            console.log('⚠️ AI disabled - API key not configured');
+            console.log('📚 To enable AI:');
+            console.log('   1. Visit: https://console.groq.com');
+            console.log('   2. Get FREE API key');
+            console.log('   3. Edit app_professional.js line 13');
+            console.log('   4. Replace YOUR_GROQ_API_KEY_HERE with your key');
             return this.searchStatic(keyword);
         }
 
         try {
-            console.log('🤖 Searching with AI:', keyword);
+            console.log('🤖 Calling Groq AI API...');
             const result = await this.searchWithAI(keyword);
+            console.log('✅ AI response received:', result);
             
             if (AI_CONFIG.cacheResults) {
                 aiCache.set(keyword.toLowerCase(), result);
@@ -394,8 +402,11 @@ class AIIPCService {
             
             return result;
         } catch (error) {
-            console.error('❌ AI failed:', error);
+            console.error('❌ AI API call failed:', error.message);
+            console.error('🔍 Error details:', error);
+            
             if (AI_CONFIG.fallbackToStatic) {
+                console.log('📊 Falling back to static keyword matching...');
                 return this.searchStatic(keyword);
             }
             throw error;
@@ -610,10 +621,26 @@ function showApp() {
     addMessage('system', `Welcome, ${currentUser.name}! 👋`);
     addMessage('system', `Role: <strong>${currentUser.role === 'admin' ? 'Police Officer' : 'Public User'}</strong> <span class="verified-badge">✓ Verified</span>`);
     
-    const aiStatus = AI_CONFIG.enabled && AI_CONFIG.groq.apiKey !== 'YOUR_GROQ_API_KEY_HERE' 
-        ? '🤖 AI-powered search is <strong>enabled</strong>!' 
-        : '⚠️ AI is disabled. Using static database.';
-    addMessage('system', aiStatus);
+    const isAIEnabled = AI_CONFIG.enabled && AI_CONFIG.groq.apiKey !== 'YOUR_GROQ_API_KEY_HERE';
+    
+    if (isAIEnabled) {
+        addMessage('system', '🤖 AI-powered IPC suggestions: <strong style="color: #4caf50;">✓ ENABLED</strong>');
+        addMessage('system', `<small style="color: #666;">Using: ${AI_CONFIG.provider.toUpperCase()} API (${AI_CONFIG.groq.model})</small>`);
+    } else {
+        addMessage('system', `
+            <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <strong>⚠️ AI is disabled - Using static keyword matching</strong><br><br>
+                <div style="margin: 10px 0;">
+                    <strong>To enable AI-powered IPC suggestions:</strong><br>
+                    1️⃣ Get FREE API key: <a href="https://console.groq.com" target="_blank" style="color: #2196f3;">console.groq.com</a> (2 minutes)<br>
+                    2️⃣ Open: <code>app_professional.js</code><br>
+                    3️⃣ Line 13: Replace <code>'YOUR_GROQ_API_KEY_HERE'</code> with your key<br>
+                    4️⃣ Save & refresh browser<br><br>
+                    📚 <strong>Full guide:</strong> See <code>SETUP_API_KEY.md</code>
+                </div>
+            </div>
+        `);
+    }
     
     addMessage('system', 'Type "help" to see available commands.');
 }
@@ -888,20 +915,49 @@ async function handleFIRCreationStep(input) {
 
 // Analyze incident description and suggest IPC sections
 async function analyzeIncidentAndSuggestIPC(description) {
+    console.log('🔍 Analyzing incident:', description);
+    console.log('🤖 AI Config:', {
+        enabled: AI_CONFIG.enabled,
+        hasApiKey: AI_CONFIG.groq.apiKey !== 'YOUR_GROQ_API_KEY_HERE',
+        provider: AI_CONFIG.provider
+    });
+    
     try {
         const result = await aiService.searchIPC(description);
+        console.log('✅ AI Result:', result);
+        
         if (result.success && result.sections.length > 0) {
+            if (result.source === 'ai') {
+                addMessage('system', `<div style="background: #e8f5e9; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                    ✅ <strong>AI Analysis Complete</strong> - Using Groq API
+                </div>`);
+            }
             return result.sections.slice(0, 3); // Top 3 suggestions
         }
     } catch (error) {
-        console.error('IPC suggestion failed:', error);
+        console.error('❌ IPC suggestion failed:', error);
+        
+        addMessage('system', `<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 5px 0;">
+            ⚠️ <strong>AI unavailable</strong> - Using keyword matching<br>
+            <small>To enable AI: Add Groq API key in app_professional.js line 13</small>
+        </div>`);
     }
     
     // Fallback: keyword matching from static data
+    console.log('📊 Using static keyword matching...');
     const lowerDesc = description.toLowerCase();
     const matches = STATIC_IPC_SECTIONS.filter(section => 
         section.keywords.some(keyword => lowerDesc.includes(keyword))
     );
+    
+    console.log('📋 Static matches found:', matches.length);
+    
+    if (matches.length === 0) {
+        addMessage('system', `<div style="background: #ffebee; padding: 10px; border-radius: 5px; margin: 5px 0;">
+            ⚠️ <strong>No automatic suggestions found</strong><br>
+            <small>Keywords not matched. You can manually enter IPC section in Step 7.</small>
+        </div>`);
+    }
     
     return matches.slice(0, 3);
 }
