@@ -114,6 +114,82 @@ let verificationCode = null;
 let firCreationState = null;
 
 // ========================================
+// Data Structures for FIR Management
+// ========================================
+
+// Stack implementation for Suspect search (LIFO - Most Recent First)
+class FIRStack {
+    constructor() {
+        this.items = [];
+    }
+    
+    push(item) {
+        this.items.push(item);
+    }
+    
+    pop() {
+        if (this.isEmpty()) return null;
+        return this.items.pop();
+    }
+    
+    peek() {
+        if (this.isEmpty()) return null;
+        return this.items[this.items.length - 1];
+    }
+    
+    isEmpty() {
+        return this.items.length === 0;
+    }
+    
+    size() {
+        return this.items.length;
+    }
+    
+    toArray() {
+        return [...this.items].reverse(); // LIFO - most recent first
+    }
+    
+    clear() {
+        this.items = [];
+    }
+}
+
+// Array implementation for Complainant search (Chronological order)
+class FIRArray {
+    constructor() {
+        this.items = [];
+    }
+    
+    push(item) {
+        this.items.push(item);
+    }
+    
+    filter(predicate) {
+        return this.items.filter(predicate);
+    }
+    
+    find(predicate) {
+        return this.items.find(predicate);
+    }
+    
+    toArray() {
+        return [...this.items]; // Original order preserved
+    }
+    
+    length() {
+        return this.items.length;
+    }
+    
+    clear() {
+        this.items = [];
+    }
+}
+
+// Initialize data structures
+const complainantArray = new FIRArray();
+const suspectStack = new FIRStack();
+
+// ========================================
 // Email Service - Using EmailJS
 // ========================================
 class EmailService {
@@ -489,6 +565,20 @@ async function parseCommand(input) {
         return;
     }
     
+    // NEW: Search FIR by Complainant Name (Array - Chronological)
+    if (cmd.startsWith('search complainant ') || cmd.startsWith('complainant ')) {
+        const name = input.replace(/search complainant /i, '').replace(/complainant /i, '').trim();
+        handleSearchByComplainant(name);
+        return;
+    }
+    
+    // NEW: Search FIR by Suspect Name (Stack - Most Recent First)
+    if (cmd.startsWith('search suspect ') || cmd.startsWith('suspect ')) {
+        const name = input.replace(/search suspect /i, '').replace(/suspect /i, '').trim();
+        handleSearchBySuspect(name);
+        return;
+    }
+    
     if (cmd.startsWith('fir ')) {
         const firId = cmd.replace('fir ', '').trim();
         handleGetFIR(firId);
@@ -741,6 +831,25 @@ function generateAndDisplayFIR() {
     firStorage.push(fir);
     localStorage.setItem('fir_records', JSON.stringify(firStorage));
     
+    // Add to data structures
+    // Array for complainant (chronological order)
+    complainantArray.push({
+        complainantName: fir.complainantName,
+        firId: fir.id,
+        date: fir.dateRegistered
+    });
+    
+    // Stack for suspect (LIFO - most recent first)
+    suspectStack.push({
+        suspectName: fir.suspectName,
+        firId: fir.id,
+        date: fir.dateRegistered
+    });
+    
+    console.log('📊 Data Structures Updated:');
+    console.log('Array (Complainant):', complainantArray.toArray());
+    console.log('Stack (Suspect):', suspectStack.toArray());
+    
     // Display professional FIR template
     const firTemplate = `
         <div style="background: white; border: 3px solid #333; padding: 30px; margin: 20px 0; border-radius: 10px; font-family: 'Courier New', monospace; max-width: 800px;">
@@ -838,6 +947,153 @@ function handleListFIRs() {
     }
 }
 
+// ========================================
+// Search FIR by Complainant (Array - Chronological Order)
+// ========================================
+function handleSearchByComplainant(name) {
+    addMessage('user', `search complainant ${name}`);
+    addMessage('system', `🔍 Searching FIRs by complainant: "${name}" (Array - Chronological Order)...`);
+    
+    const lowerName = name.toLowerCase();
+    const results = firStorage.filter(fir => 
+        fir.complainantName && fir.complainantName.toLowerCase().includes(lowerName)
+    );
+    
+    if (results.length > 0) {
+        addMessage('system', `
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4caf50;">
+                <strong>📊 Data Structure: Array (Chronological Order)</strong><br>
+                Found ${results.length} FIR(s) filed by "${name}" in chronological order (oldest to newest)
+            </div>
+        `);
+        
+        // Display in chronological order (Array maintains insertion order)
+        results.forEach((fir, index) => {
+            const message = `
+                <div style="background: white; border-left: 4px solid #4caf50; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: #2e7d32;">Case ${index + 1}: ${fir.id}</strong>
+                        <span style="background: ${fir.status === 'Closed' ? '#f44336' : '#4caf50'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">${fir.status}</span>
+                    </div>
+                    <p><strong>📅 Date:</strong> ${fir.dateRegistered}${fir.timeRegistered ? ' at ' + fir.timeRegistered : ''}</p>
+                    <p><strong>👤 Complainant:</strong> ${fir.complainantName}</p>
+                    ${fir.complainantContact ? '<p><strong>📞 Contact:</strong> ' + fir.complainantContact + '</p>' : ''}
+                    <p><strong>🔴 Suspect:</strong> ${fir.suspectName}</p>
+                    <p><strong>⚖️ IPC Section:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                    <p><strong>📝 Incident:</strong> ${fir.incidentDescription?.substring(0, 150)}${fir.incidentDescription?.length > 150 ? '...' : ''}</p>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                        <button onclick="quickCommand('fir ${fir.id}')" style="background: #2196f3; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">View Full FIR</button>
+                    </div>
+                </div>
+            `;
+            addMessage('system', message);
+        });
+        
+        addMessage('system', `
+            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center;">
+                <strong>📈 Showing ${results.length} case(s) in chronological order (Array data structure)</strong>
+            </div>
+        `);
+    } else {
+        addMessage('system', `
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800;">
+                ⚠️ No FIRs found for complainant: "${name}"
+            </div>
+        `);
+    }
+}
+
+// ========================================
+// Search FIR by Suspect (Stack - Most Recent First - LIFO)
+// ========================================
+function handleSearchBySuspect(name) {
+    addMessage('user', `search suspect ${name}`);
+    addMessage('system', `🔍 Searching FIRs by suspect: "${name}" (Stack - Most Recent First)...`);
+    
+    const lowerName = name.toLowerCase();
+    const results = firStorage.filter(fir => 
+        fir.suspectName && fir.suspectName.toLowerCase().includes(lowerName)
+    );
+    
+    if (results.length > 0) {
+        // Sort in LIFO order (most recent first) - Stack behavior
+        const stackOrder = [...results].reverse();
+        
+        addMessage('system', `
+            <div style="background: #ffebee; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #f44336;">
+                <strong>📊 Data Structure: Stack (LIFO - Last In First Out)</strong><br>
+                Found ${stackOrder.length} FIR(s) against "${name}" showing most recent cases first
+            </div>
+        `);
+        
+        // Check if repeat offender
+        if (stackOrder.length > 1) {
+            addMessage('system', `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800;">
+                    <strong>⚠️ REPEAT OFFENDER ALERT!</strong><br>
+                    This suspect has ${stackOrder.length} cases on record. Latest case shown first (Stack - LIFO order)
+                </div>
+            `);
+        }
+        
+        // Display in LIFO order (Stack - most recent on top)
+        stackOrder.forEach((fir, index) => {
+            const isLatest = index === 0;
+            const message = `
+                <div style="background: white; border-left: 4px solid #f44336; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); ${isLatest ? 'border: 3px solid #ff5722;' : ''}">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: #c62828;">${isLatest ? '🔥 LATEST CASE: ' : 'Case ' + (index + 1) + ': '}${fir.id}</strong>
+                        <span style="background: ${fir.status === 'Closed' ? '#9e9e9e' : '#f44336'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">${fir.status}</span>
+                    </div>
+                    ${isLatest ? '<div style="background: #ff5722; color: white; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px; font-size: 12px; text-align: center;"><strong>⬆️ TOP OF STACK (Most Recent)</strong></div>' : ''}
+                    <p><strong>📅 Date:</strong> ${fir.dateRegistered}${fir.timeRegistered ? ' at ' + fir.timeRegistered : ''}</p>
+                    <p><strong>🔴 Suspect:</strong> ${fir.suspectName}</p>
+                    ${fir.suspectAge ? '<p><strong>👤 Age:</strong> ' + fir.suspectAge + ' years</p>' : ''}
+                    ${fir.suspectAddress ? '<p><strong>📍 Address:</strong> ' + fir.suspectAddress + '</p>' : ''}
+                    <p><strong>👤 Complainant:</strong> ${fir.complainantName}</p>
+                    <p><strong>⚖️ IPC Section:</strong> ${fir.ipcSection}${fir.ipcTitle ? ' - ' + fir.ipcTitle : ''}</p>
+                    ${fir.ipcPunishment ? '<p><strong>⚖️ Punishment:</strong> ' + fir.ipcPunishment + '</p>' : ''}
+                    <p><strong>📝 Incident:</strong> ${fir.incidentDescription?.substring(0, 150)}${fir.incidentDescription?.length > 150 ? '...' : ''}</p>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                        <button onclick="quickCommand('fir ${fir.id}')" style="background: #f44336; color: white; border: none; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">View Full FIR</button>
+                    </div>
+                </div>
+            `;
+            addMessage('system', message);
+        });
+        
+        addMessage('system', `
+            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center;">
+                <strong>📉 Showing ${stackOrder.length} case(s) in LIFO order (Stack data structure)</strong><br>
+                <small>Most recent case is on top, oldest at bottom</small>
+            </div>
+        `);
+        
+        // Show recommendation for repeat offenders
+        if (stackOrder.length >= 2) {
+            addMessage('system', `
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800;">
+                    <strong>⚖️ RECOMMENDATION:</strong><br>
+                    Due to ${stackOrder.length} previous cases, consider:
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Stricter bail conditions</li>
+                        <li>Enhanced punishment as per repeat offender guidelines</li>
+                        <li>Monitoring and surveillance</li>
+                        <li>Referral to criminal psychology assessment</li>
+                    </ul>
+                </div>
+            `);
+        }
+    } else {
+        addMessage('system', `
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4caf50;">
+                ✅ No previous cases found for suspect: "${name}"<br>
+                <small>(First-time offender - Stack is empty for this name)</small>
+            </div>
+        `);
+    }
+}
+
 function handleGetFIR(firId) {
     const fir = firStorage.find(f => f.id === firId);
     
@@ -927,9 +1183,13 @@ function showHelp() {
         commands.push(
             '',
             '👮 Admin Commands:',
-            'create fir - Create a new FIR',
+            'create fir - Create a new FIR (7-step process with AI suggestions)',
             'list firs - View all FIRs',
-            'fir <id> - View specific FIR details'
+            'fir <id> - View specific FIR details',
+            '',
+            '🔍 Search Commands (Data Structures):',
+            'search complainant <name> - Search FIRs by complainant (Array - Chronological)',
+            'search suspect <name> - Search FIRs by suspect (Stack - Most Recent First)'
         );
     }
     
