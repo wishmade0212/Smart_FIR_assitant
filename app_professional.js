@@ -766,6 +766,7 @@ async function parseCommand(input) {
     
     if (cmd.startsWith('fir ')) {
         const firId = cmd.replace('fir ', '').trim();
+        console.log('🎯 Extracted FIR ID:', firId);
         handleGetFIR(firId);
         return;
     }
@@ -848,7 +849,13 @@ async function handleFIRCreationStep(input) {
         addMessage('system', '<strong>Step 2/7:</strong> Enter complainant contact number:');
         
     } else if (step === 2) {
-        // Step 2: Complainant Contact
+        // Step 2: Complainant Contact - Validate 10 digits
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(input)) {
+            addMessage('system', '❌ <strong>Invalid phone number!</strong> Please enter exactly 10 digits.');
+            addMessage('system', '<strong>Step 2/7:</strong> Enter complainant contact number (10 digits):');
+            return;
+        }
         firCreationState.data.complainantContact = input;
         firCreationState.step = 3;
         addMessage('system', '<strong>Step 3/7:</strong> Describe the incident (be specific, include keywords like "kill", "theft", "assault"):');
@@ -857,9 +864,12 @@ async function handleFIRCreationStep(input) {
         // Step 3: Incident Description + Auto IPC Suggestion
         firCreationState.data.incidentDescription = input;
         
-        addMessage('system', '🔍 Analyzing incident description...');
+        addMessage('system', `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center;">
+            <strong>🤖 AI Analysis in Progress...</strong><br>
+            <small>Using Groq AI (${AI_CONFIG.groq.model}) to analyze incident</small>
+        </div>`);
         
-        // Auto-detect IPC sections from keywords
+        // Auto-detect IPC sections using AI
         const suggestedSections = await analyzeIncidentAndSuggestIPC(input);
         firCreationState.suggestedIPC = suggestedSections;
         
@@ -887,6 +897,28 @@ async function handleFIRCreationStep(input) {
         // Step 4: Suspect Name + Criminal History Check
         firCreationState.data.suspectName = input;
         
+        // If suspect is unknown, skip age and address - jump to IPC selection
+        if (input.toLowerCase() === 'unknown') {
+            addMessage('system', `<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                ℹ️ Suspect identity unknown - skipping age and address details.
+            </div>`);
+            
+            firCreationState.step = 7;
+            
+            // Show suggested IPC sections again
+            if (firCreationState.suggestedIPC.length > 0) {
+                addMessage('system', '<div style="background: #e3f2fd; padding: 10px; border-radius: 5px;"><strong>💡 Suggested IPC Sections (from Step 3):</strong></div>');
+                firCreationState.suggestedIPC.forEach((section, index) => {
+                    addMessage('system', `${index + 1}. IPC ${section.section} - ${section.title}`);
+                });
+                addMessage('system', '<strong>Step 7/7:</strong> Select IPC section number (e.g., 1) or type custom (e.g., 302):');
+            } else {
+                addMessage('system', '<strong>Step 7/7:</strong> Enter IPC section (e.g., 302):');
+            }
+            return;
+        }
+        
+        // For known suspects, check criminal history
         if (input.toLowerCase() !== 'unknown') {
             addMessage('system', '🔎 Checking suspect\'s criminal history...');
             
@@ -987,8 +1019,13 @@ async function analyzeIncidentAndSuggestIPC(description) {
         
         if (result.success && result.sections.length > 0) {
             if (result.source === 'ai') {
-                addMessage('system', `<div style="background: #e8f5e9; padding: 10px; border-radius: 5px; margin: 5px 0;">
-                    ✅ <strong>AI Analysis Complete</strong> - Using Groq API
+                addMessage('system', `<div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <strong>✅ AI Analysis Complete!</strong><br>
+                    <small>Powered by Groq ${AI_CONFIG.groq.model} • Real-time IPC Suggestions</small>
+                </div>`);
+            } else {
+                addMessage('system', `<div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                    📚 Using keyword matching (AI unavailable)
                 </div>`);
             }
             return result.sections.slice(0, 3); // Top 3 suggestions
@@ -1232,7 +1269,6 @@ function handleShowAllFIRs() {
             <strong>📋 All FIR Records (${firStorage.length} total)</strong>
         </div>
     `);
-    
     firStorage.forEach((fir, index) => {
         const message = `
             <div style="background: white; border-left: 4px solid ${fir.status === 'Closed' ? '#9e9e9e' : '#4caf50'}; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -1504,7 +1540,11 @@ function handleSearchBySuspect(name) {
 }
 
 function handleGetFIR(firId) {
-    const fir = firStorage.find(f => f.id === firId);
+    console.log('🔍 Searching for FIR:', firId);
+    console.log('📦 Available FIRs:', firStorage.map(f => f.id));
+    // Case-insensitive comparison
+    const fir = firStorage.find(f => f.id.toUpperCase() === firId.toUpperCase());
+    console.log('✅ Found FIR:', fir ? fir.id : 'NOT FOUND');
     
     if (fir) {
         // Display full professional FIR template
